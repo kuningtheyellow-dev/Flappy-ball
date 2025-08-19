@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flappy Star 🚀✨</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: black;
+      height: 100vh;
+    }
+    canvas {
+      border: 3px solid white;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Karakter (bintang pixel diganti kotak kuning dulu)
+    let star = {
+      x: 50,
+      y: 150,
+      size: 25,
+      gravity: 0.6,
+      lift: -10,
+      velocity: 0
+    };
+
+    let rockets = [];
+    let frame = 0;
+    let score = 0;
+    let gameOver = false;
+
+    function drawStar() {
+      ctx.fillStyle = "yellow";
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.size/2, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    function drawRockets() {
+      ctx.fillStyle = "red";
+      rockets.forEach(r => {
+        ctx.fillRect(r.x, r.y, r.width, r.height);
+      });
+    }
+
+    function updateStar() {
+      star.velocity += star.gravity;
+      star.y += star.velocity;
+
+      if (star.y + star.size/2 > canvas.height) gameOver = true;
+      if (star.y - star.size/2 < 0) {
+        star.y = star.size/2;
+        star.velocity = 0;
+      }
+    }
+
+    function updateRockets() {
+      rockets.forEach(r => {
+        r.x -= 2;
+
+        // cek tabrakan
+        if (star.x < r.x + r.width &&
+            star.x + star.size > r.x &&
+            star.y < r.y + r.height &&
+            star.y + star.size > r.y) {
+          gameOver = true;
+        }
+
+        // skor
+        if (!r.passed && r.x + r.width < star.x) {
+          score++;
+          r.passed = true;
+        }
+      });
+
+      rockets = rockets.filter(r => r.x + r.width > 0);
+    }
+
+    function spawnRocket() {
+      let gap = 150;
+      let rocketHeight = 200;
+      let yPos = Math.random() * (canvas.height - gap - rocketHeight);
+
+      rockets.push({ x: canvas.width, y: 0, width: 50, height: yPos, passed: false });
+      rockets.push({ x: canvas.width, y: yPos + gap, width: 50, height: canvas.height - yPos - gap, passed: false });
+    }
+
+    function drawScore() {
+      ctx.fillStyle = "white";
+      ctx.font = "24px Arial";
+      ctx.fillText("Score: " + score, 10, 30);
+    }
+
+    function drawGameOver() {
+      ctx.fillStyle = "red";
+      ctx.font = "40px Arial";
+      ctx.fillText("GAME OVER", canvas.width/2 - 110, canvas.height/2);
+    }
+
+    function loop() {
+      if (gameOver) {
+        drawGameOver();
+        return;
+      }
+
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawStar();
+      drawRockets();
+      drawScore();
+
+      updateStar();
+      updateRockets();
+
+      if (frame % 120 === 0) {
+        spawnRocket();
+      }
+
+      frame++;
+      requestAnimationFrame(loop);
+    }
+
+    function flap() {
+      star.velocity = star.lift;
+    }
+
+    // Kontrol
+    document.addEventListener("keydown", flap);
+    document.addEventListener("mousedown", flap);
+    document.addEventListener("touchstart", flap);
+
+    loop();
+  </script>
+</body>
+</html>
